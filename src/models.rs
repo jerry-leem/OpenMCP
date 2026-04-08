@@ -2,17 +2,12 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value, json};
 use std::collections::BTreeMap;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "lowercase")]
 pub enum AppLocale {
+    #[default]
     English,
     Korean,
-}
-
-impl Default for AppLocale {
-    fn default() -> Self {
-        Self::English
-    }
 }
 
 // locale-specific label text is intentionally handled in UI translation tables

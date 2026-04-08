@@ -1,4 +1,6 @@
-use crate::models::{AppLocale, AppState, McpServer, ProfileScope, TransportKind, WorkspaceProfile};
+use crate::models::{
+    AppLocale, AppState, McpServer, ProfileScope, TransportKind, WorkspaceProfile,
+};
 use crate::opencode;
 use crate::storage;
 use eframe::egui::{
@@ -117,7 +119,9 @@ impl AppLocale {
             (Self::English, UiText::ScopeLabel) => "Scope",
             (Self::English, UiText::ScopeHintLabel) => "Project or global scope",
             (Self::English, UiText::OpenCodePathLabel) => "OpenCode target path hint",
-            (Self::English, UiText::OpenCodePathHint) => "Where you expect to paste or merge the config",
+            (Self::English, UiText::OpenCodePathHint) => {
+                "Where you expect to paste or merge the config"
+            }
             (Self::English, UiText::OperatorNoteLabel) => "Operator note",
             (Self::English, UiText::OperatorNoteHint) => {
                 "Explain where or how this JSON should be applied"
@@ -159,13 +163,15 @@ impl AppLocale {
             (Self::English, UiText::FlowStep3) => {
                 "3. Copy the generated JSON and merge it into your OpenCode config."
             }
-            (Self::English, UiText::FlowStep4) => "4. Reload OpenCode and confirm the server appears.",
+            (Self::English, UiText::FlowStep4) => {
+                "4. Reload OpenCode and confirm the server appears."
+            }
             (Self::English, UiText::FlowScopePrefix) => "Recommended scope",
             (Self::English, UiText::BtnInstallServerCard) => "Install to OpenCode",
             (Self::English, UiText::BtnUninstallServerCard) => "Uninstall from OpenCode",
             (Self::English, UiText::NotesHint) => {
                 "Any reminder about installation, auth, or expected capabilities"
-            },
+            }
             (Self::English, UiText::ProfileNameHint) => "Profile name",
             (Self::English, UiText::CopyJsonAgain) => "Copy JSON Again",
             (Self::English, UiText::ConfigManagerTitle) => "OpenCode Config Manager",
@@ -260,7 +266,9 @@ impl AppLocale {
             (Self::Korean, UiText::FlowStep3) => {
                 "3. 생성된 JSON을 복사해 OpenCode 설정에 병합하세요."
             }
-            (Self::Korean, UiText::FlowStep4) => "4. OpenCode를 다시 로드하고 서버 등록을 확인하세요.",
+            (Self::Korean, UiText::FlowStep4) => {
+                "4. OpenCode를 다시 로드하고 서버 등록을 확인하세요."
+            }
             (Self::Korean, UiText::FlowScopePrefix) => "권장 범위",
             (Self::Korean, UiText::BtnInstallServerCard) => "OpenCode에 설치",
             (Self::Korean, UiText::BtnUninstallServerCard) => "OpenCode에서 제거",
@@ -287,7 +295,9 @@ impl AppLocale {
             (Self::Korean, UiText::StatusCopiedSetup) => "설치 안내가 클립보드에 복사됨",
             (Self::Korean, UiText::StatusProfileCreated) => "새 프로필이 생성됨",
             (Self::Korean, UiText::StatusProfileDuplicated) => "프로필이 복제됨",
-            (Self::Korean, UiText::StatusProfileDeleteBlocked) => "최소 하나의 프로필은 남겨야 합니다",
+            (Self::Korean, UiText::StatusProfileDeleteBlocked) => {
+                "최소 하나의 프로필은 남겨야 합니다"
+            }
             (Self::Korean, UiText::StatusProfileDeleted) => "프로필이 삭제됨",
             (Self::Korean, UiText::StatusServerRemoved) => "서버가 삭제됨",
             (Self::Korean, UiText::StatusServerAdded) => "서버가 추가됨",
@@ -518,13 +528,11 @@ impl OpenMcpApp {
         let mut seen = BTreeSet::new();
 
         if profile.name.trim().is_empty() {
-            messages.push(
-                if self.state.locale == AppLocale::Korean {
-                    "프로필 이름이 필요합니다.".to_owned()
-                } else {
-                    "Profile name is required.".to_owned()
-                },
-            );
+            messages.push(if self.state.locale == AppLocale::Korean {
+                "프로필 이름이 필요합니다.".to_owned()
+            } else {
+                "Profile name is required.".to_owned()
+            });
         }
 
         for (index, server) in profile.servers.iter().enumerate() {
@@ -550,14 +558,12 @@ impl OpenMcpApp {
                 });
             }
 
-            if !server.id.trim().is_empty() {
-                if !seen.insert(server.id.clone()) {
+            if !server.id.trim().is_empty() && !seen.insert(server.id.clone()) {
                 messages.push(if self.state.locale == AppLocale::Korean {
                     format!("서버 {slot}: ID '{}'가 중복됩니다.", server.id)
                 } else {
                     format!("Server {slot}: duplicate id '{}'.", server.id)
                 });
-            }
             }
 
             match server.transport {
@@ -577,11 +583,19 @@ impl OpenMcpApp {
                         } else {
                             format!("Server {slot}: url is required for network transports.")
                         });
+                    } else if !server.url.starts_with("http://")
+                        && !server.url.starts_with("https://")
+                    {
+                        messages.push(if self.state.locale == AppLocale::Korean {
+                            format!("서버 {slot}: URL은 http:// 또는 https:// 로 시작해야 합니다.")
+                        } else {
+                            format!("Server {slot}: url must start with http:// or https://.")
+                        });
                     }
                 }
             }
 
-            for (key, _) in &server.env {
+            for key in server.env.keys() {
                 if key.trim().is_empty() {
                     messages.push(if self.state.locale == AppLocale::Korean {
                         format!("서버 {slot}: 환경 변수 키가 비어 있습니다.")
@@ -670,14 +684,14 @@ impl eframe::App for OpenMcpApp {
                 ScrollArea::vertical().show(ui, |ui| {
                     for index in 0..self.state.profiles.len() {
                         let selected = index == self.state.selected_profile;
-                            let label = {
-                                let profile = &self.state.profiles[index];
-                                format!(
-                                    "{}  {}",
-                                    profile.scope.label(self.state.locale),
-                                    profile.name
-                                )
-                            };
+                        let label = {
+                            let profile = &self.state.profiles[index];
+                            format!(
+                                "{}  {}",
+                                profile.scope.label(self.state.locale),
+                                profile.name
+                            )
+                        };
                         if ui.selectable_label(selected, label).clicked() {
                             selected_profile = Some(index);
                         }
@@ -693,7 +707,10 @@ impl eframe::App for OpenMcpApp {
                         self.duplicate_profile();
                     }
                     if ui
-                        .add_enabled(self.state.profiles.len() > 1, Button::new(self.txt(UiText::BtnDelete)))
+                        .add_enabled(
+                            self.state.profiles.len() > 1,
+                            Button::new(self.txt(UiText::BtnDelete)),
+                        )
                         .clicked()
                     {
                         self.delete_selected_profile();
@@ -761,10 +778,7 @@ impl OpenMcpApp {
             {
                 let profile = self.selected_profile_mut();
                 if ui
-                    .add(
-                        TextEdit::singleline(&mut profile.name)
-                            .hint_text(profile_name_hint),
-                    )
+                    .add(TextEdit::singleline(&mut profile.name).hint_text(profile_name_hint))
                     .changed()
                 {
                     self.dirty = true;
@@ -851,7 +865,10 @@ impl OpenMcpApp {
                         queued_action = action;
                     }
                     if ui
-                        .add_enabled(server_count > 1, Button::new(self.txt(UiText::RemoveServerButton)))
+                        .add_enabled(
+                            server_count > 1,
+                            Button::new(self.txt(UiText::RemoveServerButton)),
+                        )
                         .clicked()
                     {
                         remove_index = Some(index);
@@ -896,7 +913,10 @@ impl OpenMcpApp {
 
             let errors = self.validation_messages();
             if errors.is_empty() {
-                ui.colored_label(Color32::from_rgb(70, 145, 80), self.txt(UiText::ValidationPassed));
+                ui.colored_label(
+                    Color32::from_rgb(70, 145, 80),
+                    self.txt(UiText::ValidationPassed),
+                );
             } else {
                 ui.colored_label(
                     Color32::from_rgb(190, 120, 60),
@@ -927,7 +947,11 @@ impl OpenMcpApp {
                 self.txt(UiText::FlowScopePrefix),
                 profile.scope.label(self.state.locale)
             ));
-            ui.label(format!("{}: {}", self.txt(UiText::ManagedPathLabel), profile.open_code_path));
+            ui.label(format!(
+                "{}: {}",
+                self.txt(UiText::ManagedPathLabel),
+                profile.open_code_path
+            ));
             ui.label(profile.target_hint.as_str());
 
             ui.add_space(8.0);
@@ -947,7 +971,10 @@ impl OpenMcpApp {
             ui.add_space(10.0);
             ui.heading(self.txt(UiText::ConfigManagerTitle));
             let mut reload_clicked = false;
-            if ui.button(self.txt(UiText::ReloadInstalledStateButton)).clicked() {
+            if ui
+                .button(self.txt(UiText::ReloadInstalledStateButton))
+                .clicked()
+            {
                 reload_clicked = true;
             }
             if reload_clicked {
@@ -1008,7 +1035,10 @@ fn render_server_card(
             *dirty = true;
         }
         if installed {
-            ui.colored_label(Color32::from_rgb(70, 145, 80), locale.t(UiText::ServerCardInstalled));
+            ui.colored_label(
+                Color32::from_rgb(70, 145, 80),
+                locale.t(UiText::ServerCardInstalled),
+            );
         } else {
             ui.colored_label(
                 Color32::from_rgb(130, 130, 130),
@@ -1017,17 +1047,13 @@ fn render_server_card(
         }
     });
 
-        ui.label(locale.t(UiText::ServerIdLabel));
-        if ui
-            .add(TextEdit::singleline(&mut server.id).hint_text(if locale == AppLocale::Korean {
-                "filesystem"
-            } else {
-                "filesystem"
-            }))
-            .changed()
-        {
-            *dirty = true;
-        }
+    ui.label(locale.t(UiText::ServerIdLabel));
+    if ui
+        .add(TextEdit::singleline(&mut server.id).hint_text("filesystem"))
+        .changed()
+    {
+        *dirty = true;
+    }
 
     ui.horizontal(|ui| {
         ui.label(locale.t(UiText::TransportLabel));
@@ -1037,11 +1063,7 @@ fn render_server_card(
             TransportKind::Http,
         ] {
             if ui
-                .selectable_value(
-                    &mut server.transport,
-                    transport,
-                    transport.label(locale),
-                )
+                .selectable_value(&mut server.transport, transport, transport.label(locale))
                 .changed()
             {
                 *dirty = true;
@@ -1094,18 +1116,14 @@ fn render_server_card(
 
     ui.add_space(6.0);
     ui.horizontal(|ui| {
-                if installed
-                    && ui
+        if installed
+            && ui
                 .button(locale.t(UiText::BtnUninstallServerCard))
                 .clicked()
         {
             requested = Some(ServerConfigAction::Uninstall(index));
         }
-        if !installed
-            && ui
-                .button(locale.t(UiText::BtnInstallServerCard))
-                .clicked()
-        {
+        if !installed && ui.button(locale.t(UiText::BtnInstallServerCard)).clicked() {
             requested = Some(ServerConfigAction::Install(index));
         }
     });
@@ -1149,24 +1167,24 @@ fn render_server_card(
         *dirty = true;
     }
 
-            if ui.button(locale.t(UiText::AddEnvVarButton)).clicked() {
-                let key = format!("NEW_ENV_{}", server.env.len() + 1);
-                server.env.insert(key, String::new());
-                *dirty = true;
-            }
+    if ui.button(locale.t(UiText::AddEnvVarButton)).clicked() {
+        let key = format!("NEW_ENV_{}", server.env.len() + 1);
+        server.env.insert(key, String::new());
+        *dirty = true;
+    }
 
     ui.add_space(6.0);
     ui.label(locale.t(UiText::NotesLabel));
     if ui
-            .add(
-                TextEdit::multiline(&mut server.notes)
-                    .desired_rows(3)
-                    .hint_text(locale.t(UiText::NotesHint)),
-            )
-                    .changed()
-                {
-                    *dirty = true;
-                }
+        .add(
+            TextEdit::multiline(&mut server.notes)
+                .desired_rows(3)
+                .hint_text(locale.t(UiText::NotesHint)),
+        )
+        .changed()
+    {
+        *dirty = true;
+    }
 
     requested
 }
