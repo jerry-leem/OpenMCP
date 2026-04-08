@@ -4,8 +4,7 @@ use crate::models::{
 use crate::opencode;
 use crate::storage;
 use eframe::egui::{
-    self, Align, Button, Color32, Context, Layout, RichText, ScrollArea, SidePanel, TextEdit,
-    TopBottomPanel, Ui,
+    self, Align, Button, Color32, Context, Layout, Panel, RichText, ScrollArea, TextEdit, Ui,
 };
 use serde_json::{Map, json};
 use std::collections::BTreeSet;
@@ -638,7 +637,8 @@ impl OpenMcpApp {
 }
 
 impl eframe::App for OpenMcpApp {
-    fn update(&mut self, ctx: &Context, _frame: &mut eframe::Frame) {
+    fn ui(&mut self, ui: &mut Ui, _frame: &mut eframe::Frame) {
+        let ctx = ui.ctx().clone();
         let mut copy_json = false;
         let mut copy_setup = false;
         let mut load_config = false;
@@ -646,7 +646,7 @@ impl eframe::App for OpenMcpApp {
         let mut uninstall_enabled = false;
         let mut selected_profile = None;
 
-        TopBottomPanel::top("top_bar").show(ctx, |ui| {
+        Panel::top("top_bar").show_inside(ui, |ui| {
             ui.horizontal_wrapped(|ui| {
                 ui.heading(self.txt(UiText::AppTitle));
                 ui.label(self.txt(UiText::AppSubtitle));
@@ -673,10 +673,10 @@ impl eframe::App for OpenMcpApp {
             });
         });
 
-        SidePanel::left("profiles")
+        Panel::left("profiles")
             .resizable(true)
-            .default_width(260.0)
-            .show(ctx, |ui| {
+            .default_size(260.0)
+            .show_inside(ui, |ui| {
                 ui.heading(self.txt(UiText::Profiles));
                 ui.label(self.txt(UiText::ProfilesHint));
                 ui.add_space(8.0);
@@ -718,14 +718,14 @@ impl eframe::App for OpenMcpApp {
                 });
             });
 
-        egui::CentralPanel::default().show(ctx, |ui| {
+        egui::CentralPanel::default().show_inside(ui, |ui| {
             ui.columns(2, |columns| {
                 self.render_editor(&mut columns[0]);
-                self.render_preview(&mut columns[1], ctx);
+                self.render_preview(&mut columns[1], &ctx);
             });
         });
 
-        TopBottomPanel::bottom("status_bar").show(ctx, |ui| {
+        Panel::bottom("status_bar").show_inside(ui, |ui| {
             ui.horizontal_wrapped(|ui| {
                 let dirty = if self.dirty {
                     self.txt(UiText::StatusUnsaved)
@@ -741,10 +741,10 @@ impl eframe::App for OpenMcpApp {
             self.refresh_managed_servers();
         }
         if copy_json {
-            self.copy_generated_json(ctx);
+            self.copy_generated_json(&ctx);
         }
         if copy_setup {
-            self.copy_instructions(ctx);
+            self.copy_instructions(&ctx);
         }
         if install_enabled {
             self.install_enabled_servers();

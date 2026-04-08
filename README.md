@@ -43,6 +43,8 @@ cargo run
 cargo build --release
 ```
 
+- 저장소에는 `rust-toolchain.toml` 이 포함되어 있으며, 현재 검증한 툴체인은 Rust `1.94.1` 입니다.
+
 ### 테스트
 
 ```bash
@@ -103,6 +105,8 @@ cargo run
 ```bash
 cargo build --release
 ```
+
+- The repository includes `rust-toolchain.toml`, and the validated toolchain is Rust `1.94.1`.
 
 ### Test
 
